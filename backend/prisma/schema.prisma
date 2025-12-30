@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+enum SeatStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum SubscriptionType {
+  MONTHLY
+  QUARTERLY
+  SEMESTER
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+}
+
+enum NotificationType {
+  RESERVATION_CONFIRMED
+  RESERVATION_CANCELLED
+  SUBSCRIPTION_APPROVED
+  SUBSCRIPTION_SUSPENDED
+  SUBSCRIPTION_EXPIRED
+  GENERAL
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  phone         String?
+  avatar        String?
+  role          Role     @default(CLIENT)
+  reservationsCount Int  @default(0)
+  hours         Int      @default(0)
+  spending      Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  reservations Reservation[]
+  subscription Subscription?
+  notifications Notification[]
+}
+
+model Room {
+  id          String   @id @default(cuid())
+  name        String
+  tagline     String
+  description String
+  image       String
+  color       String
+  gradient    String[]
+  features    String[]
+  amenities   Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  seats Seat[]
+}
+
+model Seat {
+  id        String     @id @default(cuid())
+  roomId    String
+  number    Int
+  status    SeatStatus @default(AVAILABLE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  room         Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+
+  @@unique([roomId, number])
+  @@index([roomId, status])
+}
+
+model Reservation {
+  id        String             @id @default(cuid())
+  userId    String
+  seatId    String
+  date      DateTime
+  startTime String
+  endTime   String
+  price     Float              @default(0)
+  status    ReservationStatus @default(CONFIRMED)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seat Seat @relation(fields: [seatId], references: [id])
+
+  @@index([userId, date])
+  @@index([seatId, date])
+}
+
+model Subscription {
+  id        String             @id @default(cuid())
+  userId    String             @unique
+  type      SubscriptionType
+  status    SubscriptionStatus @default(PENDING)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  content   String
+  sentAt    DateTime         @default(now())
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String?
+  ip        String
+  success   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
+  @@index([email, createdAt])
+}

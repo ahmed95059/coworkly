@@ -1,0 +1,19 @@
+API Module,Feature / Action,Actor,Backend Logic & CRUD Responsibility
+Auth,Registration & Login,"User, Admin","• Generate & validate JWT tokens.• Hash passwords (e.g., bcrypt).• Create User record."
+/api/auth,Password Reset,User,• Email token generation (optional) or current password validation.
+,Profile Management,User,"• Update user details (phone, email)."
+Rooms,Manage Rooms,Admin,"• CRUD: Create, Update, Delete rooms.• Define capacity and layout metadata."
+/api/rooms,View Rooms,"User, Admin",• Fetch list of rooms.• Fetch specific room details.
+Seats,Manage Seats,Admin,"• CRUD: Add seats to a room.• Define seat type (e.g., desk, meeting pod)."
+/api/seats,Check Availability,User,"• Complex Query: Check Reservations table against requested datetime to determine if a seat is ""Free"" or ""Occupied."""
+Reservations,Create Reservation,User,• Validation: Check if seat is free for specific slot.• Validation: Check if user has active subscription (if required).• Insert record into Reservations.
+/api/reservations,Manage Reservations,User,• View history and upcoming bookings.• Cancel booking (Update status to cancelled).
+,Admin Oversight,Admin,• View all reservations (filter by date/user).• Force cancel/modify if necessary.
+Subscriptions,View Plans,User,"• Fetch static list of plans (Monthly, Quarterly, etc.)."
+/api/subscriptions,Request Subscription,User,• Create a SubscriptionRequest record.• Status defaults to Pending.
+,Validate Subscription,Admin,• Update status from Pending → Active.• Set start_date and end_date manually upon physical payment.
+,Check Status,User,• Middleware check: Is the current date within start_date and end_date?
+Notifications,Triggers,System,"• Logic: Create notification records on events (Reservation success, Sub expiration)."
+/api/notifications,Fetch Notifications,User,• Get unread messages.• Mark as read.
+Admin,Dashboard Stats,Admin,"• Aggregate queries: Count active users, calculate seat utilization rates (%)."
+/api/admin,User Management,Admin,• Ban/Suspend users.• Reset user passwords manually.
